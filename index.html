@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How a Chatbot Learns — from a pile of text to answering you</title>
+<meta name="description" content="An animated, plain-language walkthrough of how large language models are trained, fine-tuned and used.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="orbs" aria-hidden="true"><span></span><span></span><span></span></div>
+
+<!-- ============ COVER ============ -->
+<div class="cover" id="cover">
+  <div class="cover-inner">
+    <div class="badge">An animated explainer · 8 steps</div>
+    <h1>How does a chatbot<br><span class="grad">learn to talk?</span></h1>
+    <p class="cover-sub">
+      No code. No math. Just watch what happens between a mountain of text
+      and the answer that shows up on your screen.
+    </p>
+    <button class="btn btn-primary btn-lg" id="startBtn">Start the journey</button>
+    <p class="cover-hint">Use <kbd>&rarr;</kbd> and <kbd>&larr;</kbd> to move between steps.</p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div class="app" id="app" hidden>
+
+  <header class="topbar">
+    <div class="brand"><span class="brand-dot"></span>How a Chatbot Learns</div>
+    <nav class="rail" id="rail" aria-label="Steps"></nav>
+    <button class="btn btn-ghost btn-sm" id="autoBtn">Auto-play</button>
+  </header>
+
+  <main id="main">
+
+    <!-- ---------- STEP 1 ---------- -->
+    <section class="stage" data-title="Gather text">
+      <div class="panel">
+        <div class="stage-top">
+          <div class="kicker">Step 1 · Getting the data</div>
+          <button class="btn btn-tiny" data-replay>Replay</button>
+        </div>
+        <h2>First, gather a mountain of text</h2>
+        <p class="lead">Books, websites, articles, code, subtitles. <b>Nobody labels it.</b> It is just plain text — trillions of words of it.</p>
+
+        <div class="viz viz-pile">
+          <div class="pile" id="pile"></div>
+          <div class="pile-counter">
+            <span id="pileCount">0</span>
+            <small>tokens of text read by the model</small>
+          </div>
+        </div>
+
+        <div class="note"><b>Real number:</b> Meta trained its Llama&nbsp;3 model on about <b>15 trillion tokens</b> of text. A token is a small chunk of text — more on that in the next step.</div>
+      </div>
+    </section>
+
+    <!-- ---------- STEP 2 ---------- -->
+    <section class="stage" data-title="Chop into tokens">
+      <div class="panel">
+        <div class="stage-top">
+          <div class="kicker">Step 2 · Tokenizing</div>
+          <button class="btn btn-tiny" data-replay>Replay</button>
+        </div>
+        <h2>Chop the text into tokens</h2>
+        <p class="lead">Computers do not read letters or words. Text gets cut into pieces called <b>tokens</b> — and every token is stored as a <b>number</b>.</p>
+
+        <div class="viz viz-tok">
+          <div class="tok-row">
+            <input id="tokInput" type="text" value="The Moon is a natural satellite." aria-label="Type a sentence">
+            <button class="btn btn-primary" id="tokBtn">Chop it up</button>
+          </div>
+          <div class="tok-out" id="tokOut"></div>
+          <div class="tok-legend">
+            <span class="dot-key"></span> text of the token &nbsp;·&nbsp; <span class="num-key"></span> the number the computer stores
+          </div>
+        </div>
+
+        <div class="note"><b>Rule of thumb:</b> one token is about <b>3&nbsp;of&nbsp;4 of a word</b> in English. Real models keep a fixed list of roughly <b>100,000</b> possible tokens. (This demo's chopper is simplified — real ones are learned from data.)</div>
+      </div>
+    </section>
+
+    <!-- ---------- STEP 3 ---------- -->
+    <section class="stage" data-title="Learn by guessing">
+      <div class="panel">
+        <div class="stage-top">
+          <div class="kicker">Step 3 · Pre-training</div>
+          <button class="btn btn-tiny" data-replay>Replay</button>
+        </div>
+        <h2>Learn by guessing the next token</h2>
+        <p class="lead">Hide the next token. Guess it. Check the real answer. Nudge the model a little. Repeat trillions of times.</p>
+
+        <div class="viz viz-guess">
+          <div class="guess-line">
+            <span class="gword">The</span><span class="gword">Moon</span><span class="gword">is</span><span class="gword">a</span><span class="gword">natural</span><span class="gblank" id="gblank">?</span>
+          </div>
+          <div class="guess-status" id="guessStatus">Round 1 of 3 — it takes a guess</div>
+          <div class="cands" id="guessCands"></div>
+          <div class="score-row">
+            <span class="score-label">Times it guesses right</span>
+            <span class="bar"><i id="guessBar"></i></span>
+            <span class="score-pct" id="guessPct">0%</span>
+          </div>
+        </div>
+
+        <div class="note"><b>Why this works:</b> the text is its own answer key, so it can practise on trillions of examples with no human labelling anything. To guess well, it ends up learning grammar, facts and patterns. This stage is called <b>pre-training</b> — it takes months and thousands of specialized chips.</div>
+      </div>
+    </section>
+
+    <!-- ---------- STEP 4 ---------- -->
+    <section class="stage" data-title="Base model">
+      <div class="panel">
+        <div class="stage-top">
+          <div class="kicker">Step 4 · The base model</div>
+          <button class="btn btn-tiny" data-replay>Replay</button>
+        </div>
+        <h2>Now it knows language — but it is not helpful yet</h2>
+        <p class="lead">The model got extremely good at finishing text. It has <b>no idea</b> it is supposed to answer you.</p>
+
+        <div class="viz viz-base">
+          <div class="bubble user">What is the capital of France?</div>
+          <div class="bubble bot" id="baseOut"><span class="caret"></span></div>
+          <div class="stamp" id="baseStamp">It did not answer. It just continued the pattern.</div>
+        </div>
+
+        <div class="note"><b>A model at this point is called a base model.</b> It is a text-continuation machine, not an assistant. So how do we teach it to help?</div>
+      </div>
+    </section>
+
+    <!-- ---------- STEP 5 ---------- -->
+    <section class="stage" data-title="Fine-tuning">
+      <div class="panel">
+        <div class="stage-top">
+          <div class="kicker">Step 5 · Fine-tuning</div>
+          <button class="btn btn-tiny" data-replay>Replay</button>
+        </div>
+        <h2>Show it thousands of good answers</h2>
+        <p class="lead">Humans write example conversations: here is a question, here is a great answer. The model copies the <b>shape</b> of being helpful.</p>
+
+        <div class="viz viz-sft">
+          <div class="ex-col" id="sftEx"></div>
+          <div class="ex-arrow">&rarr;</div>
+          <div class="model-box">
+            <div class="model-core">Model</div>
+            <div class="score-row tight">
+              <span class="score-label">Follows instructions</span>
+              <span class="bar"><i id="sftBar"></i></span>
+              <span class="score-pct" id="sftPct">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="note"><b>This stage is called fine-tuning</b> (or instruction tuning). It uses thousands of examples, not trillions — a tiny fraction of the work of pre-training.</div>
+      </div>
+    </section>
+
+    <!-- ---------- STEP 6 ---------- -->
+    <section class="stage" data-title="Human feedback">
+      <div class="panel">
+        <div class="stage-top">
+          <div class="kicker">Step 6 · Learning from feedback</div>
+          <button class="btn btn-tiny" data-replay>Replay</button>
+        </div>
+        <h2>Let people pick the better answer</h2>
+        <p class="lead">Two answers. One person. They click the one they prefer. Do that again and again, and the model learns what people actually want.</p>
+
+        <div class="viz viz-rlhf" id="rlhfViz">
+          <div class="prompt-line" id="rlhfPrompt"></div>
+          <div class="pair" id="rlhfPair"></div>
+          <div class="ghost-cursor" id="ghost"></div>
+          <div class="score-row">
+            <span class="score-label">Leans toward answers people prefer</span>
+            <span class="bar"><i id="rlhfBar"></i></span>
+            <span class="score-pct" id="rlhfPct">0%</span>
+          </div>
+        </div>
+
+        <div class="note"><b>This stage is usually called RLHF</b> — reinforcement learning from human feedback. People do not rewrite the model; they only say "this one was better". Those choices steer it toward being helpful, honest and safe.</div>
+      </div>
+    </section>
+
+    <!-- ---------- STEP 7 ---------- -->
+    <section class="stage" data-title="Test and lock">
+      <div class="panel">
+        <div class="stage-top">
+          <div class="kicker">Step 7 · Testing and safety</div>
+          <button class="btn btn-tiny" data-replay>Replay</button>
+        </div>
+        <h2>Test it hard, then lock it</h2>
+        <p class="lead">Thousands of test questions. Trick questions designed to break it. Safety checks. Fix what fails, then freeze the model.</p>
+
+        <div class="viz viz-test">
+          <ul class="checklist" id="checklist"></ul>
+          <div class="freeze" id="freezeBox">
+            <div class="lock">Locked</div>
+            <p>The numbers inside the model are now <b>frozen</b>. It is copied onto servers and switched on.</p>
+          </div>
+        </div>
+
+        <div class="note"><b>Real fact:</b> testing never really ends. Even after a model ships, teams keep hunting for new ways to break it.</div>
+      </div>
+    </section>
+
+    <!-- ---------- STEP 8 ---------- -->
+    <section class="stage" data-title="Using it">
+      <div class="panel">
+        <div class="stage-top">
+          <div class="kicker">Step 8 · Inference (using it)</div>
+          <button class="btn btn-tiny" data-replay>Replay</button>
+        </div>
+        <h2>Now you type something</h2>
+        <p class="lead">Your words become tokens. The model predicts the next token, then the next, then the next. That is the <b>only</b> thing it ever does.</p>
+
+        <div class="viz viz-infer">
+          <div class="chat">
+            <div class="chat-head">A tiny model, running live in your browser</div>
+            <div class="chat-log" id="chatLog"></div>
+            <div class="chip-row" id="chatPresets"></div>
+            <div class="chat-row">
+              <input id="chatInput" type="text" placeholder="Ask about the Moon, the sky or rain..." aria-label="Ask the tiny model">
+              <button class="btn btn-primary" id="chatSend">Send</button>
+              <button class="btn btn-ghost btn-sm" id="chatStop" disabled>Stop</button>
+            </div>
+          </div>
+
+          <aside class="side">
+            <div class="side-card">
+              <div class="side-title">What it is "thinking"</div>
+              <div class="cands" id="liveCands"><div class="cand-empty">Send a message to watch it choose.</div></div>
+            </div>
+
+            <div class="side-card">
+              <label class="temp-label" for="temp">Randomness <b id="tempVal">0.70</b></label>
+              <input type="range" id="temp" min="0" max="1.5" step="0.05" value="0.7">
+              <div class="temp-ends"><span>0 · safe</span><span>1.5 · wild</span></div>
+              <div class="bars" id="tempBars"></div>
+            </div>
+
+            <div class="side-card">
+              <div class="side-title">Tokens generated</div>
+              <div class="big-num" id="tokCount">0</div>
+              <div class="tiny">Each token cost one full trip through the model.</div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="note"><b>The part everyone gets wrong:</b> using the model does not change the model. It learns nothing from you. By default it only sees the text in this one conversation — close the tab and it is gone.</div>
+      </div>
+    </section>
+
+    <!-- ---------- WRAP ---------- -->
+    <section class="stage" data-title="The big picture">
+      <div class="panel">
+        <div class="stage-top">
+          <div class="kicker">The big picture</div>
+          <button class="btn btn-tiny" data-replay>Replay</button>
+        </div>
+        <h2>Four things worth remembering</h2>
+        <p class="lead">You just walked through the whole pipeline: <b>pre-training &rarr; fine-tuning &rarr; human feedback &rarr; testing &rarr; inference.</b></p>
+
+        <div class="cards" id="wrapCards">
+          <div class="card">
+            <div class="card-num">1</div>
+            <h3>Trained once, used forever</h3>
+            <p>Training sets the numbers inside the model. After that they are frozen. Every time you chat with it, you are using the same frozen model.</p>
+          </div>
+          <div class="card">
+            <div class="card-num">2</div>
+            <h3>It predicts, it does not look up</h3>
+            <p>It always guesses the most likely next token. Sounding likely is not the same as being true — that is why it can be confidently wrong.</p>
+          </div>
+          <div class="card">
+            <div class="card-num">3</div>
+            <h3>Randomness is a dial</h3>
+            <p>Low temperature: it almost always picks the safest token. High temperature: it takes risks. At 0 it always picks the single most likely token.</p>
+          </div>
+          <div class="card">
+            <div class="card-num">4</div>
+            <h3>It forgets you</h3>
+            <p>It only sees the text inside the current conversation, up to a size limit called the context window. Nothing you say retrains it.</p>
+          </div>
+        </div>
+
+        <div class="note"><b>One more honest thing:</b> the little model in Step&nbsp;8 has hand-made numbers so you could watch the guessing. Real models learn their numbers from data — but the guessing step works exactly the same way.</div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="navbar">
+    <button class="btn btn-ghost" id="prevBtn">&larr; Back</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <div class="stepnum" id="stepNum">1 / 9</div>
+    <button class="btn btn-primary" id="nextBtn">Next &rarr;</button>
+  </footer>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
